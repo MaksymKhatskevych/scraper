@@ -5,6 +5,8 @@ import logging
 from database import insert_into_db, select_from_table
 from dotenv import load_dotenv
 
+from dump import dump_database, schedule_daily_dump
+
 load_dotenv()
 
 
@@ -140,6 +142,8 @@ if __name__ == "__main__":
     for row in result:
         print('__________________________________________________________')
         print(row)
+    dump_database()
+    schedule_daily_dump()
     end_time = time.time()
     execution_time = end_time - start_time
     print("Execution time:", execution_time, "seconds")
