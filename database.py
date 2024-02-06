@@ -84,4 +84,3 @@ def select_from_table(table_name):
     cursor.close()
     conn.close()
     return rows
-
