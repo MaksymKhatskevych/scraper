@@ -67,6 +67,9 @@ def extract_car_data(car_url):
             vin_code_element = soup.find('span', class_='label-vin')
             car_data['vin_code'] = vin_code_element.text if vin_code_element else "N/A"
 
+            vehicle = soup.find('div', class_='bold dhide')
+            car_data['vehicle'] = vehicle.text
+            
             image_container = soup.find('div', class_='count-photo left')
             if image_container:
                 image_count = image_container.find('span', class_='mhide').text
