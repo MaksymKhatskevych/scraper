@@ -48,6 +48,9 @@ def extract_car_data(car_url):
             soup = BeautifulSoup(response.text, 'lxml', from_encoding='utf-8')
 
             car_data = {}
+
+            car_data['url'] = car_url
+            
             car_title_element = soup.find('h3', class_='auto-content_title')
             car_data['car_title'] = car_title_element.text.split() if car_title_element else ["N/A"]
 
