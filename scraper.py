@@ -45,12 +45,12 @@ def extract_car_data(car_url):
     try:
         response = requests.get(car_url)
         if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'lxml', from_encoding='utf-8')
+            soup = BeautifulSoup(response.text, 'lxml')
 
             car_data = {}
 
             car_data['url'] = car_url
-            
+
             car_title_element = soup.find('h3', class_='auto-content_title')
             car_data['car_title'] = car_title_element.text.split() if car_title_element else ["N/A"]
 
@@ -72,7 +72,7 @@ def extract_car_data(car_url):
 
             vehicle = soup.find('div', class_='bold dhide')
             car_data['vehicle'] = vehicle.text
-            
+
             image_container = soup.find('div', class_='count-photo left')
             if image_container:
                 image_count = image_container.find('span', class_='mhide').text
