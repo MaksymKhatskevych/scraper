@@ -1,59 +1,61 @@
 import os
-from datetime import datetime, time as dtime, timedelta
-import subprocess
-from time import sleep
-
+import shutil
+from datetime import datetime
+import schedule
+import time
 from dotenv import load_dotenv
+from database import connect_db
 
 load_dotenv()
 
 
 def dump_database():
     try:
-        database_url = os.getenv("DATABASE_URL")
+        conn = connect_db()
+        db_url = os.getenv("DATABASE_URL")
         dump_folder = os.path.join(os.getcwd(), "dumps")
 
-        os.makedirs(dump_folder, exist_ok=True)
+        # Create 'dump' folder if it doesn't exist
+        if not os.path.exists(dump_folder):
+            os.makedirs(dump_folder)
 
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        dump_filename = f"dump_{timestamp}.sql"
+        dump_filename = f"database_dump_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
         dump_filepath = os.path.join(dump_folder, dump_filename)
 
-        command = [
-            "C:\\Program Files\\PostgreSQL\\16\\bin\\pg_dump.exe",
-            f'--dbname={database_url}',
-            f'--file={dump_filepath}',
-            '--no-password',
-        ]
+        # Using pg_dump to dump the PostgreSQL database to a SQL file
+        dump_command = f"pg_dump {db_url} > {dump_filepath}"
+        os.system(dump_command)
 
-        subprocess.run(command, check=True)
+        print(f"Database dumped to {dump_filepath}")
 
-        print(f"Database dumped successfully to {dump_filepath}")
+        conn.close()
 
-    except Exception as e:
-        print(f"An error occurred during database dump: {str(e)}")
-
+        return dump_filepath
 
     except Exception as e:
         print(f"An error occurred during database dump: {str(e)}")
+        return None
+
+
+def daily_dump_job():
+    dump_filepath = dump_database()
+    if dump_filepath:
+        destination_folder = os.path.join(os.getcwd(), "dumps")
+        destination_path = os.path.join(destination_folder, os.path.basename(dump_filepath))
+        shutil.copy2(dump_filepath, destination_path)
+        print(f"Daily dump copied to {destination_path}")
 
 
 def schedule_daily_dump():
-    dump_time_str = os.getenv("DUMP_TIME")
-    dump_time = dtime(*map(int, dump_time_str.split(":")))
-
-    while True:
-        now = datetime.now().time()
-        if now > dump_time:
-            tomorrow = datetime.combine(datetime.now().date(), dump_time) + timedelta(days=1)
-            time_until_next_dump = (tomorrow - datetime.now()).seconds
-            sleep(time_until_next_dump)
-        else:
-            time_until_next_dump = (datetime.combine(datetime.now().date(), dump_time) - datetime.now()).seconds
-            sleep(time_until_next_dump)
-
-        dump_database()
+    # Schedule daily dump at 12:00 PM
+    schedule.every().day.at("12:00").do(daily_dump_job)
 
 
 if __name__ == "__main__":
-    schedule_daily_dump()
+    # Run the daily dump job immediately (for testing purposes)
+    daily_dump_job()
+
+    # Keep the script running to allow scheduled tasks to execute
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
